@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Levi's Log: Classified</title>
+    <title>Levi's Log: God Mode Final</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;900&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -13,11 +13,15 @@
         :root {
             --corps-green: #0a1f12; --corps-accent: #1e5a32; --steel: #b8c2cc; --gold: #c5a059;
             --gas-blue: #00d2ff; --bg-dark: #050505;
-            --rage-1: #8a0b0b; --rage-2: #ff0000; --rage-3: #ff4500;
+            /* Rage Tiers */
+            --rage-1: #8a0b0b; /* Anger */
+            --rage-2: #ff0000; /* Fury */
+            --rage-3: #ff4500; /* Berserk */
+            
             --box-size: 50px; --font-size: 1rem; --grid-gap: 4px;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; /* Hide default cursor for blade effect */ }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark);
@@ -28,20 +32,7 @@
             overscroll-behavior: none;
         }
 
-        /* --- CUSTOM CURSOR (BLADE) --- */
-        #cursor {
-            position: fixed; width: 20px; height: 20px; border: 2px solid var(--steel);
-            border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 9999;
-            mix-blend-mode: difference; transition: transform 0.1s;
-        }
-        .slash-trail {
-            position: fixed; pointer-events: none; background: rgba(255, 255, 255, 0.8);
-            height: 2px; border-radius: 2px; z-index: 9998;
-            animation: fadeTrail 0.5s forwards;
-        }
-        @keyframes fadeTrail { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0); } }
-
-        /* --- VISUAL FX LAYERS --- */
+        /* --- FX LAYERS --- */
         .rage-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at center, transparent 0%, #000 100%);
@@ -54,28 +45,22 @@
         }
         .lightning-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(255, 255, 255, 0.4); z-index: 100; pointer-events: none; opacity: 0; mix-blend-mode: overlay;
+            background: rgba(255, 255, 255, 0.2); z-index: 100; pointer-events: none; opacity: 0; mix-blend-mode: overlay;
         }
         .lightning-flash { animation: flash 0.1s linear; }
         @keyframes flash { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
 
-        /* --- EASTER EGG OVERLAY --- */
-        .sasageyo-overlay {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            font-family: 'Cinzel', serif; font-weight: 900; font-size: 5rem; color: var(--gold);
-            text-shadow: 0 0 50px var(--gold); z-index: 200; pointer-events: none;
-            white-space: nowrap; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .sasageyo-overlay.active { transform: translate(-50%, -50%) scale(1); animation: shake 0.5s infinite; }
-
         /* --- RAGE TIERS CSS --- */
+        /* Tier 1: Anger */
         body.rage-anger .rage-overlay { background: radial-gradient(circle at center, rgba(138, 11, 11, 0.2) 0%, rgba(0,0,0,0.9) 100%); opacity: 1; }
         body.rage-anger .container { border-color: var(--rage-1); box-shadow: 0 0 60px rgba(138, 11, 11, 0.4); }
         
+        /* Tier 2: Fury */
         body.rage-fury .rage-overlay { background: radial-gradient(circle at center, rgba(255, 0, 0, 0.3) 0%, #000 100%); opacity: 1; }
         body.rage-fury .container { border-color: var(--rage-2); box-shadow: 0 0 80px rgba(255, 0, 0, 0.6); animation: pulseFury 0.8s infinite; }
         @keyframes pulseFury { 0% { transform: scale(1); } 50% { transform: scale(1.005); border-color: #ff5555; } 100% { transform: scale(1); } }
 
+        /* Tier 3: Berserk */
         body.rage-berserk .rage-overlay { background: radial-gradient(circle at center, rgba(255, 69, 0, 0.2) 0%, #000 100%); opacity: 1; mix-blend-mode: hard-light; }
         body.rage-berserk .container { border-color: var(--rage-3); box-shadow: 0 0 100px rgba(255, 69, 0, 0.8); animation: glitchShake 0.2s infinite; }
         body.rage-berserk .streak-val { color: var(--rage-3); text-shadow: 0 0 20px var(--rage-3); animation: glitchText 0.3s infinite; display: inline-block; }
@@ -98,7 +83,6 @@
             padding: 10px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
             background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); flex-shrink: 0; height: 80px;
         }
-        .title-group { cursor: pointer; user-select: none; }
         .title-group h1 { font-family: 'Cinzel', serif; font-size: 1.6rem; color: var(--steel); margin: 0; line-height: 1; }
         .title-group span { font-size: 0.65rem; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
         .stats-group { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
@@ -140,10 +124,6 @@
             cursor: pointer; transition: transform 0.1s; flex-shrink: 0;
         }
         .titan-box:hover { background: rgba(255,255,255,0.1); border-color: var(--steel); color: #fff; transform: scale(1.1); z-index: 5; }
-        /* SHIFTER BOX (SURPRISE 1) */
-        .titan-box.shifter { border-color: var(--gold); background: rgba(197, 160, 89, 0.1); box-shadow: 0 0 10px var(--gold); animation: pulseGold 2s infinite; }
-        @keyframes pulseGold { 0% { box-shadow: 0 0 5px var(--gold); } 50% { box-shadow: 0 0 15px var(--gold); } 100% { box-shadow: 0 0 5px var(--gold); } }
-
         .titan-box.killed { background: transparent; border: 1px dashed rgba(255,255,255,0.1); color: transparent; pointer-events: none; }
         .titan-box.killed::before { content: ''; position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%); animation: steam 1s forwards; }
         @keyframes steam { to { opacity: 0; transform: scale(1.5) translateY(-20px); } }
@@ -172,7 +152,7 @@
         .btn-initiate { background: transparent; color: var(--gold); border: 2px solid var(--gold); padding: 12px 50px; font-family: 'Cinzel', serif; font-size: 1.1rem; cursor: pointer; transition: 0.3s; letter-spacing: 2px; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%); margin-top: 20px; }
         .btn-initiate:hover { background: var(--gold); color: #000; box-shadow: 0 0 30px var(--gold); }
 
-        /* --- POPUPS --- */
+        /* --- POPUPS & MODALS --- */
         .status-msg {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
             font-family: 'Cinzel', serif; font-weight: 900; font-size: 3rem; color: #fff;
@@ -194,12 +174,10 @@
 </head>
 <body id="appBody">
 
-<div id="cursor"></div>
 <div class="rage-overlay"></div>
 <div class="fog-layer"></div>
 <div class="lightning-overlay" id="lightning"></div>
 <div class="status-msg" id="statusMsg">RAMPAGE</div>
-<div class="sasageyo-overlay" id="sasageyoText">SHINZOU WO SASAGEYO!</div>
 
 <div class="modal-overlay" id="lobbyModal">
     <div class="modal-box">
@@ -214,7 +192,7 @@
 
 <div class="container hidden" id="gameContainer">
     <header>
-        <div class="title-group" id="headerTitle">
+        <div class="title-group">
             <span>Survey Corps</span>
             <h1>Expedition Log</h1>
         </div>
@@ -270,7 +248,7 @@
 
 <script>
     // ------------------------------------------------------------------
-    // PASTE YOUR FIREBASE CONFIG HERE
+    // 1. PASTE YOUR FIREBASE CONFIG HERE (Required for Multiplayer)
     // ------------------------------------------------------------------
     const firebaseConfig = {
   apiKey: "AIzaSyBhgKU1kSCJhzsFABa-IXRe19BaxTSQACI",
@@ -292,8 +270,8 @@
         }
     } catch(e) { console.warn("Firebase Error: Paste your config keys."); }
 
-    const KEY = 'levi_final_log';
-    const BG_KEY = 'levi_final_bg';
+    const KEY = 'levi_god_log';
+    const BG_KEY = 'levi_god_bg';
     const ROOM_KEY = 'levi_room_id';
     const ID_KEY = 'levi_player_id';
     
@@ -326,67 +304,10 @@
         mainArea: document.getElementById('mainArea'),
         body: document.getElementById('appBody'),
         bgInput: document.getElementById('bgInput'),
-        lightning: document.getElementById('lightning'),
-        headerTitle: document.getElementById('headerTitle'),
-        sasageyo: document.getElementById('sasageyoText'),
-        cursor: document.getElementById('cursor')
+        lightning: document.getElementById('lightning')
     };
 
-    // --- CURSOR LOGIC (SURPRISE 2) ---
-    document.addEventListener('mousemove', (e) => {
-        els.cursor.style.left = e.clientX + 'px';
-        els.cursor.style.top = e.clientY + 'px';
-        
-        // Create trail
-        const trail = document.createElement('div');
-        trail.className = 'slash-trail';
-        trail.style.left = e.clientX + 'px';
-        trail.style.top = e.clientY + 'px';
-        
-        // Randomize trail angle for "slash" effect
-        const angle = Math.random() * 360;
-        trail.style.width = (Math.random() * 40 + 10) + 'px';
-        trail.style.transform = `rotate(${angle}deg)`;
-        
-        document.body.appendChild(trail);
-        setTimeout(() => trail.remove(), 500);
-    });
-
-    // --- KONAMI CODE (SURPRISE 4) ---
-    const secretCode = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
-    let secretIndex = 0;
-    document.addEventListener('keydown', (e) => {
-        if (e.key === secretCode[secretIndex]) {
-            secretIndex++;
-            if (secretIndex === secretCode.length) {
-                // ACTIVATE CHEAT
-                showStatus("GOD MODE ACTIVATED");
-                els.body.classList.add('rage-berserk');
-                triggerLightning();
-                data.dailyKills = 100; // Fake stats
-                data.streak = 999;
-                updateUI();
-                secretIndex = 0;
-            }
-        } else {
-            secretIndex = 0;
-        }
-    });
-
-    // --- SASAGEYO EGG (SURPRISE 3) ---
-    let headerClicks = 0;
-    els.headerTitle.addEventListener('click', () => {
-        headerClicks++;
-        if(headerClicks === 5) {
-            els.sasageyo.classList.add('active');
-            els.body.classList.add('rage-berserk');
-            triggerLightning();
-            setTimeout(() => els.sasageyo.classList.remove('active'), 3000);
-            headerClicks = 0;
-        }
-    });
-
-    // --- DIAL LOGIC ---
+    // --- DIAL LOGIC (TOUCH FIXED) ---
     const dialInteraction = document.getElementById('dialInteraction');
     const dialProgress = document.getElementById('dialProgress');
     const knobDot = document.getElementById('knobDot');
@@ -409,7 +330,8 @@
         if(e.type === 'touchmove') e.preventDefault(); // Stop Scroll
         const rect = dialContainer.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2; const centerY = rect.top + rect.height / 2;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX; 
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         let angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI); 
         angle = angle + 90; if(angle < 0) angle += 360;
         let days = Math.round((angle / 360) * 90); if(days <= 0) days = 1; setDialValue(days);
@@ -418,6 +340,7 @@
     dialInteraction.addEventListener('mousedown', () => isDragging = true);
     window.addEventListener('mouseup', () => isDragging = false);
     window.addEventListener('mousemove', (e) => { if(isDragging) handleDrag(e); });
+    // Passive false for preventing scroll
     dialInteraction.addEventListener('touchstart', (e) => { isDragging = true; handleDrag(e); }, { passive: false });
     window.addEventListener('touchend', () => isDragging = false);
     window.addEventListener('touchmove', (e) => { if(isDragging) handleDrag(e); }, { passive: false });
@@ -459,7 +382,7 @@
 
     // --- JOIN ---
     function joinRoom() {
-        if(!db) { alert("Paste Firebase Config in the code!"); return; }
+        if(!db) { alert("Paste Firebase Config in the code to enable multiplayer!"); return; }
         const rName = els.roomInput.value.trim();
         const pName = els.nameInput.value.trim();
         if(!rName || !pName) return alert("Required");
@@ -491,13 +414,6 @@
         data.titans.forEach((t, i) => {
             const box = document.createElement('div');
             box.className = `titan-box ${t.dead ? 'killed' : ''}`;
-            
-            // TITAN SHIFTER LOGIC (SURPRISE 1)
-            // Deterministic based on index so it doesn't change on reload
-            if(!t.dead && (i * 1337) % 100 < 5) {
-                box.classList.add('shifter');
-            }
-
             if(!t.dead) box.innerText = i + 1;
             box.onclick = (e) => killTitan(i, e, box);
             els.grid.appendChild(box);
@@ -513,16 +429,10 @@
     }
 
     function killTitan(index, e, box) {
-        // Shifter check
-        if(box.classList.contains('shifter')) {
-            showStatus("SHIFTER KILLED! RAGE BOOST!");
-            data.streak += 5; // Bonus
-            triggerLightning();
-        }
-
         data.titans[index].dead = true;
         const todayStr = getTodayString();
         
+        // Streak + Daily Kills
         if(data.lastLogDate === todayStr) { 
             data.dailyKills = (data.dailyKills||0) + 1; 
         } else {
@@ -534,8 +444,8 @@
         
         save();
         box.innerText = ''; box.classList.add('killed');
-        box.classList.remove('shifter'); // remove glow
         
+        // Crit FX
         if(Math.random() > 0.9) {
             const crit = document.createElement('div'); crit.className = 'crit-text'; crit.innerText = "PERFECT CUT";
             crit.style.left = (e.clientX - 60) + 'px'; crit.style.top = (e.clientY - 40) + 'px';
@@ -546,15 +456,25 @@
         updateUI(); updateServer();
     }
 
+    // --- GOD MODE LOGIC ---
     function checkRageMode() {
         els.body.classList.remove('rage-anger', 'rage-fury', 'rage-berserk');
         let effectiveStreak = data.streak;
+        
+        // Instant Berserk if doing multi-day work
         if(data.dailyKills >= 2 && effectiveStreak < 3) effectiveStreak = 3;
         if(data.dailyKills >= 5 && effectiveStreak < 5) effectiveStreak = 5;
 
-        if(effectiveStreak >= 10) { els.body.classList.add('rage-berserk'); triggerLightning(); }
-        else if (effectiveStreak >= 5) els.body.classList.add('rage-fury');
-        else if (effectiveStreak >= 3) els.body.classList.add('rage-anger');
+        // Apply Tiers
+        if(effectiveStreak >= 10) { 
+            els.body.classList.add('rage-berserk'); 
+            triggerLightning();
+            if(data.dailyKills >= 2) showStatus("GOD MODE");
+        } else if (effectiveStreak >= 5) {
+            els.body.classList.add('rage-fury');
+        } else if (effectiveStreak >= 3) {
+            els.body.classList.add('rage-anger');
+        }
     }
 
     function triggerLightning() {
@@ -574,6 +494,7 @@
         els.myPct.innerText = pct + '%';
         els.streakVal.innerText = data.streak;
 
+        // Dynamic Colors
         if(els.body.classList.contains('rage-berserk')) els.gasFill.style.background = 'linear-gradient(90deg, #ff4500, #ff8c00)';
         else if(els.body.classList.contains('rage-fury')) els.gasFill.style.background = 'linear-gradient(90deg, #ff0000, #ff5555)';
         else if(els.body.classList.contains('rage-anger')) els.gasFill.style.background = 'linear-gradient(90deg, #8a0b0b, #b30000)';
@@ -582,6 +503,7 @@
         renderSquadList();
     }
 
+    // --- FIREBASE ---
     function updateServer() {
         if(!db || !roomId) return;
         const kills = data.titans.filter(t => t.dead).length;
@@ -602,11 +524,15 @@
         if(!squadData) return;
         let html = '';
         Object.keys(squadData).forEach(key => {
-            if(key === myId) return;
+            if(key === myId) return; // Skip self
             const p = squadData[key];
             const pPct = p.total > 0 ? Math.round((p.kills / p.total) * 100) : 0;
+            
+            // Rival Bar Color
             let barColor = '#5c2b2b';
-            if(p.streak >= 10) barColor = '#ff4500'; else if(p.streak >= 5) barColor = '#ff0000'; else if(p.streak >= 3) barColor = '#8a0b0b';
+            if(p.streak >= 10) barColor = '#ff4500'; 
+            else if(p.streak >= 5) barColor = '#ff0000'; 
+            else if(p.streak >= 3) barColor = '#8a0b0b';
 
             html += `
                 <div class="squad-member">
@@ -622,6 +548,7 @@
         els.squadList.innerHTML = html;
     }
 
+    // --- LAYOUT ---
     function calcLayout() {
         const w = els.mainArea.clientWidth; const h = els.mainArea.clientHeight;
         const totalArea = w * h; const areaPerBox = totalArea / (data.total || 30);
@@ -634,9 +561,14 @@
 
     function resetAll() {
         if(confirm("Abort Mission? This removes you from the squad.")) { 
+            // 1. Delete from Server
             if(db && roomId && myId) { db.ref('rooms/' + roomId + '/' + myId).remove(); }
+            
+            // 2. Clear Local
             data.active = false; 
-            localStorage.removeItem(ROOM_KEY); localStorage.removeItem(ROOM_KEY + '_name');
+            localStorage.removeItem(ROOM_KEY); 
+            localStorage.removeItem(ROOM_KEY + '_name');
+            // Keep ID_KEY to prevent ghosts on immediate rejoin
             save(); location.reload(); 
         }
     }

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Levi's Log: Mobile Fix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;900&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --corps-green: #0a1f12; --corps-accent: #1e5a32; --steel: #b8c2cc; --gold: #c5a059;
+            --gas-blue: #00d2ff; --blood: #ff1a1a; --bg-dark: #050505;
+            --box-size: 50px; --font-size: 1rem; --grid-gap: 4px;
+            /* Mobile Rage Colors */
+            --rage-1: #8a0b0b; --rage-2: #ff0000; --rage-3: #ff4500;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark);
+            height: 100vh; width: 100vw; display: flex; justify-content: center; align-items: center;
+            overflow: hidden; background-image: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+            background-size: cover; background-position: center;
+            color: var(--steel); position: relative; transition: all 0.5s ease-out;
+            overscroll-behavior: none; /* Prevent bounce on mobile */
+        }
+
+        /* --- VISUAL FX --- */
+        .rage-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(138, 11, 11, 0.4) 0%, rgba(0, 0, 0, 0.9) 100%);
+            mix-blend-mode: multiply; pointer-events: none; z-index: 1; opacity: 0; transition: opacity 1s;
+        }
+        .fog-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            opacity: 0.4; pointer-events: none; z-index: 2;
+        }
+        .lightning-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255, 241, 118, 0.4); z-index: 100; pointer-events: none; opacity: 0; mix-blend-mode: overlay;
+        }
+        .lightning-flash { animation: flash 0.3s linear; }
+        @keyframes flash { 0% { opacity: 0; } 10% { opacity: 1; background: rgba(255, 241, 118, 0.8); } 20% { opacity: 0; } 100% { opacity: 0; } }
+
+        /* RAGE TIERS */
+        body.rage-berserk .rage-overlay { opacity: 1; }
+        body.rage-berserk .container { border-color: var(--blood); box-shadow: 0 0 80px rgba(255, 26, 26, 0.5); animation: pulseBorder 0.2s infinite; }
+        body.rage-fury .container { border-color: var(--rage-2); box-shadow: 0 0 50px rgba(255, 0, 0, 0.4); animation: pulseBorder 1s infinite; }
+        body.rage-anger .container { border-color: var(--rage-1); }
+        @keyframes pulseBorder { 0% { border-color: var(--blood); } 50% { border-color: #5c0000; } 100% { border-color: var(--blood); } }
+
+        /* --- CONTAINER --- */
+        .container {
+            background: rgba(20, 25, 20, 0.95); width: 96vw; height: 96vh;
+            border: 1px solid rgba(255,255,255,0.1); border-top: 4px solid var(--corps-accent); border-bottom: 4px solid var(--corps-accent);
+            border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+            position: relative; display: flex; flex-direction: column; backdrop-filter: blur(10px); z-index: 10;
+            transition: border-color 0.5s, box-shadow 0.5s;
+        }
+
+        /* --- HEADER --- */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); flex-shrink: 0; height: 70px;
+        }
+        .title-group h1 { font-family: 'Cinzel', serif; font-size: 1.5rem; color: var(--steel); margin: 0; line-height: 1; }
+        .title-group span { font-size: 0.6rem; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
+        .stats-group { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+        .streak-wrapper { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 0.7rem; color: #555; letter-spacing: 1px; }
+        .streak-val { font-size: 1.1rem; color: #fff; margin-left: 5px; transition: transform 0.2s; }
+
+        .btn-group { display: flex; gap: 5px; margin-top: 2px; }
+        .header-btn {
+            font-size: 0.6rem; color: #5c2b2b; border: 1px solid #5c2b2b; padding: 2px 8px;
+            text-transform: uppercase; letter-spacing: 1px; border-radius: 2px;
+            transition: all 0.3s; cursor: pointer; opacity: 0.7; background: transparent;
+        }
+        .header-btn:hover { opacity: 1; background: var(--blood); color: white; border-color: var(--blood); }
+        .header-btn.bg-btn { color: var(--gold); border-color: var(--gold); }
+        .header-btn.bg-btn:hover { background: var(--gold); color: black; }
+
+        /* --- INFO PANEL --- */
+        .info-panel { padding: 5px 20px 10px; position: relative; flex-shrink: 0; display:flex; gap: 10px; align-items: flex-start; }
+        .main-gauge-wrapper { flex: 2; }
+        .gas-bar-container { width: 100%; height: 15px; background: #0a0a0a; border: 1px solid #333; border-radius: 4px; position: relative; overflow: hidden; margin-top: 2px; }
+        .gas-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #005c7a, var(--gas-blue)); box-shadow: 0 0 20px var(--gas-blue); position: absolute; z-index: 2; transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1); opacity: 0.9; }
+        
+        .squad-list-wrapper { flex: 1; max-height: 60px; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid #333; padding: 5px; border-radius: 4px; }
+        .squad-list-wrapper::-webkit-scrollbar { width: 2px; }
+        .squad-list-wrapper::-webkit-scrollbar-thumb { background: #444; }
+        .squad-member { display: flex; align-items: center; gap: 5px; font-size: 0.6rem; margin-bottom: 2px; }
+        .squad-name { width: 50px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #888; }
+        .squad-bar-bg { flex: 1; height: 4px; background: #111; border-radius: 2px; overflow: hidden; }
+        .squad-bar-fill { height: 100%; background: #5c2b2b; width: 0%; transition: width 0.5s; }
+
+        /* --- CONTENT --- */
+        .content-area { flex: 1; padding: 10px; display: flex; flex-direction: column; overflow: hidden; position: relative; align-items: center; justify-content: center; }
+        .grid-container { display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: var(--grid-gap); width: 100%; height: 100%; }
+        .titan-box {
+            width: var(--box-size); height: var(--box-size);
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255,255,255,0.3); font-family: 'Cinzel', serif; font-weight: bold; font-size: var(--font-size);
+            cursor: pointer; transition: transform 0.1s; flex-shrink: 0;
+        }
+        .titan-box:hover { background: rgba(255,255,255,0.1); border-color: var(--steel); color: #fff; transform: scale(1.1); z-index: 5; }
+        .titan-box.killed { background: transparent; border: 1px dashed rgba(255,255,255,0.1); color: transparent; pointer-events: none; }
+        .titan-box.killed::before { content: ''; position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%); animation: steam 1s forwards; }
+        @keyframes steam { to { opacity: 0; transform: scale(1.5) translateY(-20px); } }
+
+        /* --- DIAL (MOBILE FIXED) --- */
+        #setupView { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        .dial-container { 
+            width: 260px; height: 260px; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 30px; user-select: none;
+            touch-action: none; /* CRITICAL FOR MOBILE */
+        }
+        
+        .dial-ring-outer { position: absolute; width: 100%; height: 100%; border: 2px dashed rgba(197, 160, 89, 0.3); border-radius: 50%; animation: spin 20s linear infinite; }
+        .dial-ring-inner { position: absolute; width: 85%; height: 85%; border: 1px solid rgba(184, 194, 204, 0.2); border-top: 1px solid var(--gas-blue); border-radius: 50%; animation: spinRev 10s linear infinite; }
+        .dial-svg { width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; position: relative; z-index: 5; }
+        .dial-track { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 8; }
+        .dial-progress { fill: none; stroke: var(--gold); stroke-width: 8; stroke-dasharray: 660; stroke-dashoffset: 660; transition: stroke-dashoffset 0.1s; stroke-linecap: round; filter: drop-shadow(0 0 5px var(--gold)); }
+        
+        /* Interaction Layer */
+        .dial-interaction-layer { 
+            position: absolute; top:0; left:0; width:100%; height:100%; z-index: 20; 
+            cursor: grab; border-radius: 50%; 
+            /* Double check touch action here too */
+            touch-action: none; 
+        }
+        
+        .knob-dot { position: absolute; top: 15px; left: 50%; width: 30px; height: 30px; background: #fff; border: 2px solid var(--gold); border-radius: 50%; transform: translate(-50%, 0); box-shadow: 0 0 15px var(--gold); pointer-events: none; transition: transform 0.1s; z-index: 6; }
+        
+        .dial-center { position: absolute; z-index: 2; text-align: center; pointer-events: none;}
+        .dial-input { pointer-events: all; background: transparent; border: none; font-family: 'Cinzel', serif; font-size: 3.5rem; color: var(--steel); text-align: center; width: 150px; text-shadow: 0 0 20px rgba(0, 210, 255, 0.5); outline: none; }
+        .dial-label { display: block; font-size: 0.7rem; color: var(--gas-blue); letter-spacing: 3px; font-weight: bold; margin-top: -10px; }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spinRev { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
+        .btn-initiate { background: transparent; color: var(--gold); border: 2px solid var(--gold); padding: 12px 50px; font-family: 'Cinzel', serif; font-size: 1.1rem; cursor: pointer; transition: 0.3s; letter-spacing: 2px; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%); margin-top: 20px; }
+        .btn-initiate:hover { background: var(--gold); color: #000; box-shadow: 0 0 30px var(--gold); }
+
+        /* --- POPUPS --- */
+        .status-msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5); font-family: 'Cinzel', serif; font-weight: 900; font-size: 3rem; color: #fff; text-shadow: 0 0 20px var(--blood), 0 0 50px var(--blood); opacity: 0; pointer-events: none; z-index: 100; white-space: nowrap; }
+        .status-msg.pop { animation: msgPop 1.5s forwards; }
+        @keyframes msgPop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 10% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(2); filter: blur(10px); } }
+        .crit-text { position: absolute; color: var(--blood); font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.5rem; text-shadow: 0 0 5px #fff; pointer-events: none; z-index: 50; animation: critPop 0.5s forwards; white-space: nowrap; }
+        @keyframes critPop { 0% { transform: scale(0.5) rotate(-10deg); opacity: 0; } 50% { transform: scale(1.5) rotate(-10deg); opacity: 1; } 100% { transform: scale(1) rotate(-10deg) translateY(-20px); opacity: 0; } }
+
+        /* Lobby */
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #050505; z-index: 200; display:flex; justify-content:center; align-items:center; }
+        .modal-box { text-align: center; }
+        .modal-input { padding: 15px; font-size: 1.2rem; background: #111; border: 2px solid #333; color: white; text-align: center; width: 300px; margin-top: 10px; display: block; margin-left: auto; margin-right: auto; }
+        .modal-btn { padding: 15px 40px; font-size: 1.2rem; background: var(--gold); border: none; font-weight: bold; cursor: pointer; margin-top: 20px; font-family: 'Cinzel'; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body id="appBody">
+
+<div class="rage-overlay"></div>
+<div class="fog-layer"></div>
+<div class="lightning-overlay" id="lightning"></div>
+<div class="status-msg" id="statusMsg">RAMPAGE</div>
+
+<div class="modal-overlay" id="lobbyModal">
+    <div class="modal-box">
+        <h1 style="font-family:'Cinzel'; color:var(--steel); font-size: 2.5rem;">SQUAD JOIN</h1>
+        <p style="color:#888; margin-top: 20px; font-size: 0.8rem;">CALL SIGN</p>
+        <input type="text" id="nameInput" class="modal-input" placeholder="e.g. Captain Levi">
+        <p style="color:#888; margin-top: 15px; font-size: 0.8rem;">ROOM NAME</p>
+        <input type="text" id="roomInput" class="modal-input" placeholder="e.g. wall-maria">
+        <button class="modal-btn" onclick="joinRoom()">DEPLOY</button>
+    </div>
+</div>
+
+<div class="container hidden" id="gameContainer">
+    <header>
+        <div class="title-group">
+            <span>Survey Corps</span>
+            <h1>Expedition</h1>
+        </div>
+        <div class="stats-group">
+            <div class="streak-wrapper">
+                <span id="roomDisplay" style="color:var(--gas-blue)"></span> | STREAK <span class="streak-val" id="streakVal">0</span>
+            </div>
+            <div class="btn-group">
+                <input type="file" id="bgInput" accept="image/*" style="display:none">
+                <button class="header-btn bg-btn" onclick="document.getElementById('bgInput').click()">BG</button>
+                <button class="header-btn" onclick="resetAll()">Abort</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="info-panel">
+        <div class="main-gauge-wrapper">
+            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--gas-blue); margin-bottom: 2px;">
+                <span>GAS LEVELS</span>
+                <span style="font-weight: bold;">YOU: <span id="myPct">0%</span></span>
+            </div>
+            <div class="gas-bar-container">
+                <div class="gas-fill" id="gasFill"></div>
+            </div>
+        </div>
+        <div class="squad-list-wrapper" id="squadList">
+            <div style="font-size:0.6rem; color:#555; text-align:center;">WAITING FOR SQUAD...</div>
+        </div>
+    </div>
+
+    <div class="content-area" id="mainArea">
+        <div id="setupView">
+            <div class="dial-container" id="dialContainer">
+                <div class="dial-ring-outer"></div> <div class="dial-ring-inner"></div>
+                <svg class="dial-svg" viewBox="0 0 260 260">
+                    <circle class="dial-track" cx="130" cy="130" r="105" />
+                    <circle class="dial-progress" id="dialProgress" cx="130" cy="130" r="105" />
+                </svg>
+                <div class="dial-interaction-layer" id="dialInteraction"></div>
+                <div class="knob-dot" id="knobDot"></div>
+                <div class="dial-center">
+                    <input type="number" id="dialInput" class="dial-input" value="30" min="1" max="365">
+                    <span class="dial-label">DAYS</span>
+                </div>
+            </div>
+            <button class="btn-initiate" onclick="startMission()">INITIATE</button>
+        </div>
+
+        <div id="gridView" class="grid-container hidden"></div>
+    </div>
+</div>
+
+<script>
+    // ------------------------------------------------------------------
+    // PASTE FIREBASE CONFIG HERE
+    // ------------------------------------------------------------------
+    const firebaseConfig = {
+  apiKey: "AIzaSyBhgKU1kSCJhzsFABa-IXRe19BaxTSQACI",
+  authDomain: "tracker-9f72a.firebaseapp.com",
+  databaseURL: "https://tracker-9f72a-default-rtdb.firebaseio.com",
+  projectId: "tracker-9f72a",
+  storageBucket: "tracker-9f72a.firebasestorage.app",
+  messagingSenderId: "1037638988632",
+  appId: "1:1037638988632:web:dd2356fa86c33a494beb2d",
+  measurementId: "G-VLLG075RMR"
+};
+    // ------------------------------------------------------------------
+
+    let db = null;
+    try {
+        if(firebaseConfig.apiKey) {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+        }
+    } catch(e) { console.warn("Firebase Error"); }
+
+    const KEY = 'levi_mobile_log';
+    const BG_KEY = 'levi_mobile_bg';
+    const ROOM_KEY = 'levi_room_id';
+    const ID_KEY = 'levi_player_id'; // Keeps ID consistent
+    
+    // Check ID logic
+    let myId = localStorage.getItem(ID_KEY);
+    if (!myId) {
+        myId = 'scout_' + Math.random().toString(36).substr(2, 6);
+        localStorage.setItem(ID_KEY, myId);
+    }
+
+    let myName = "Scout";
+    let roomId = null;
+    let data = { active: false, total: 0, titans: [], streak: 0, lastLogDate: null, dailyKills: 0 };
+    let squadData = {}; 
+
+    const els = {
+        lobby: document.getElementById('lobbyModal'),
+        game: document.getElementById('gameContainer'),
+        roomInput: document.getElementById('roomInput'),
+        nameInput: document.getElementById('nameInput'),
+        roomDisplay: document.getElementById('roomDisplay'),
+        setup: document.getElementById('setupView'),
+        grid: document.getElementById('gridView'),
+        gasFill: document.getElementById('gasFill'),
+        myPct: document.getElementById('myPct'),
+        squadList: document.getElementById('squadList'),
+        streakVal: document.getElementById('streakVal'),
+        statusMsg: document.getElementById('statusMsg'),
+        mainArea: document.getElementById('mainArea'),
+        body: document.getElementById('appBody'),
+        bgInput: document.getElementById('bgInput'),
+        lightning: document.getElementById('lightning')
+    };
+
+    // --- MOBILE DIAL LOGIC ---
+    const dialInteraction = document.getElementById('dialInteraction');
+    const dialProgress = document.getElementById('dialProgress');
+    const knobDot = document.getElementById('knobDot');
+    const dialInput = document.getElementById('dialInput');
+    const dialContainer = document.getElementById('dialContainer');
+    let isDragging = false; const radius = 105; const circumference = 2 * Math.PI * radius;
+
+    function setDialValue(days) {
+        let displayDays = days; if(days > 90) displayDays = days % 90 || 90;
+        const degrees = (displayDays / 90) * 360;
+        const offset = circumference - (degrees / 360) * circumference;
+        dialProgress.style.strokeDasharray = circumference; dialProgress.style.strokeDashoffset = offset;
+        const rad = (degrees - 90) * (Math.PI / 180);
+        const x = 130 + (radius * Math.cos(rad)); const y = 130 + (radius * Math.sin(rad));
+        knobDot.style.transform = `translate(${x - 130 - 15}px, ${y - 130 - 15}px)`; // -15 for 30px knob
+        dialInput.value = days;
+    }
+
+    function handleDrag(e) {
+        // PREVENT SCROLLING ON MOBILE
+        if(e.type === 'touchmove') e.preventDefault();
+
+        const rect = dialContainer.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2; const centerY = rect.top + rect.height / 2;
+        
+        // Handle Touch vs Mouse coordinates
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX; 
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+        let angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI); 
+        angle = angle + 90; if(angle < 0) angle += 360;
+        
+        let days = Math.round((angle / 360) * 90); if(days <= 0) days = 1; setDialValue(days);
+    }
+
+    // Mouse Listeners
+    dialInteraction.addEventListener('mousedown', () => isDragging = true);
+    window.addEventListener('mouseup', () => isDragging = false);
+    window.addEventListener('mousemove', (e) => { if(isDragging) handleDrag(e); });
+
+    // Touch Listeners (Non-passive for preventDefault)
+    dialInteraction.addEventListener('touchstart', (e) => { isDragging = true; handleDrag(e); }, { passive: false });
+    window.addEventListener('touchend', () => isDragging = false);
+    window.addEventListener('touchmove', (e) => { if(isDragging) handleDrag(e); }, { passive: false });
+
+    dialInput.addEventListener('change', (e) => setDialValue(parseInt(e.target.value)||30));
+    setDialValue(30);
+
+    // --- SETUP ---
+    window.onload = () => {
+        const saved = localStorage.getItem(KEY);
+        if(saved) {
+            data = JSON.parse(saved);
+            if(data.lastLogDate !== getTodayString()) {
+                data.dailyKills = 0; checkStreakDecay(); save();
+            }
+        }
+        
+        const savedBg = localStorage.getItem(BG_KEY);
+        if(savedBg) els.body.style.backgroundImage = `url('${savedBg}')`;
+        els.bgInput.addEventListener('change', handleBgUpload);
+        window.addEventListener('resize', () => { if(data.active) calcLayout(); });
+
+        const savedRoom = localStorage.getItem(ROOM_KEY);
+        const savedName = localStorage.getItem(ROOM_KEY + '_name');
+        if(savedRoom && savedName) {
+            els.roomInput.value = savedRoom; els.nameInput.value = savedName;
+            joinRoom(); 
+        }
+    };
+
+    function handleBgUpload(e) {
+        const file = e.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onloadend = function() {
+            els.body.style.backgroundImage = `url('${reader.result}')`;
+            try { localStorage.setItem(BG_KEY, reader.result); } catch(e){}
+        }
+        reader.readAsDataURL(file);
+    }
+
+    // --- JOIN ---
+    function joinRoom() {
+        if(!db) { alert("Configure Firebase first!"); return; }
+        const rName = els.roomInput.value.trim();
+        const pName = els.nameInput.value.trim();
+        if(!rName || !pName) return alert("Required");
+        
+        roomId = rName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        myName = pName;
+
+        localStorage.setItem(ROOM_KEY, roomId);
+        localStorage.setItem(ROOM_KEY + '_name', myName);
+
+        els.lobby.classList.add('hidden');
+        els.game.classList.remove('hidden');
+        els.roomDisplay.innerText = roomId.toUpperCase();
+
+        listenToRoom(); 
+        if(data.active) { renderGame(); updateServer(); }
+    }
+
+    // --- GAME ---
+    function startMission() {
+        const val = parseInt(dialInput.value); if(!val) return;
+        const newTitans = []; for(let i=0; i<val; i++) newTitans.push({ id: i+1, dead: false });
+        data.active = true; data.total = val; data.titans = newTitans;
+        save(); renderGame(); updateServer();
+    }
+
+    function renderGame() {
+        els.setup.classList.add('hidden'); els.grid.classList.remove('hidden'); els.grid.innerHTML = '';
+        data.titans.forEach((t, i) => {
+            const box = document.createElement('div');
+            box.className = `titan-box ${t.dead ? 'killed' : ''}`;
+            if(!t.dead) box.innerText = i + 1;
+            box.onclick = (e) => killTitan(i, e, box);
+            els.grid.appendChild(box);
+        });
+        calcLayout(); updateUI(); checkRageMode();
+    }
+
+    function getTodayString() { return new Date().toISOString().split('T')[0]; }
+    function checkStreakDecay() {
+        if(!data.lastLogDate) return;
+        const today = new Date(getTodayString()); const last = new Date(data.lastLogDate);
+        if(Math.ceil(Math.abs(today - last) / (1000*60*60*24)) > 1) data.streak = 0;
+    }
+
+    function killTitan(index, e, box) {
+        data.titans[index].dead = true;
+        const todayStr = getTodayString();
+        if(data.lastLogDate === todayStr) { data.dailyKills = (data.dailyKills||0) + 1; }
+        else {
+            data.dailyKills = 1;
+            const today = new Date(todayStr); const last = data.lastLogDate ? new Date(data.lastLogDate) : null;
+            if(last && Math.ceil(Math.abs(today - last)/(1000*60*60*24)) === 1) data.streak++; else data.streak = 1;
+            data.lastLogDate = todayStr;
+        }
+        save();
+        box.innerText = ''; box.classList.add('killed');
+        if(Math.random() > 0.9) {
+            const crit = document.createElement('div'); crit.className = 'crit-text'; crit.innerText = "PERFECT CUT";
+            crit.style.left = (e.clientX - 60) + 'px'; crit.style.top = (e.clientY - 40) + 'px';
+            document.body.appendChild(crit); setTimeout(()=>crit.remove(), 600);
+        }
+        
+        checkRageMode();
+        updateUI(); updateServer();
+    }
+
+    function checkRageMode() {
+        els.body.classList.remove('rage-anger', 'rage-fury', 'rage-berserk');
+        let effectiveStreak = data.streak;
+        if(data.dailyKills >= 2 && effectiveStreak < 3) effectiveStreak = 3;
+        if(data.dailyKills >= 5 && effectiveStreak < 5) effectiveStreak = 5;
+
+        if(effectiveStreak >= 10) { els.body.classList.add('rage-berserk'); triggerLightning(); }
+        else if (effectiveStreak >= 5) els.body.classList.add('rage-fury');
+        else if (effectiveStreak >= 3) els.body.classList.add('rage-anger');
+    }
+
+    function triggerLightning() {
+        els.lightning.classList.remove('lightning-flash');
+        void els.lightning.offsetWidth; els.lightning.classList.add('lightning-flash');
+    }
+
+    function updateUI() {
+        const kills = data.titans.filter(t => t.dead).length;
+        const pct = data.total > 0 ? Math.round((kills / data.total) * 100) : 0;
+        els.gasFill.style.width = pct + '%';
+        els.myPct.innerText = pct + '%';
+        els.streakVal.innerText = data.streak;
+
+        if(els.body.classList.contains('rage-berserk')) els.gasFill.style.background = 'linear-gradient(90deg, #ff4500, #ff8c00)';
+        else if(els.body.classList.contains('rage-fury')) els.gasFill.style.background = 'linear-gradient(90deg, #ff0000, #ff5555)';
+        else if(els.body.classList.contains('rage-anger')) els.gasFill.style.background = 'linear-gradient(90deg, #8a0b0b, #b30000)';
+        else els.gasFill.style.background = 'linear-gradient(90deg, #005c7a, #00d2ff)';
+        
+        renderSquadList();
+    }
+
+    function updateServer() {
+        if(!db || !roomId) return;
+        const kills = data.titans.filter(t => t.dead).length;
+        db.ref('rooms/' + roomId + '/' + myId).set({
+            name: myName, total: data.total, kills: kills, streak: data.streak, timestamp: Date.now()
+        });
+    }
+
+    function listenToRoom() {
+        if(!db || !roomId) return;
+        db.ref('rooms/' + roomId).on('value', (snapshot) => {
+            squadData = snapshot.val() || {};
+            updateUI();
+        });
+    }
+
+    function renderSquadList() {
+        if(!squadData) return;
+        let html = '';
+        Object.keys(squadData).forEach(key => {
+            if(key === myId) return;
+            const p = squadData[key];
+            const pPct = p.total > 0 ? Math.round((p.kills / p.total) * 100) : 0;
+            let barColor = '#5c2b2b';
+            if(p.streak >= 10) barColor = '#ff4500'; else if(p.streak >= 5) barColor = '#ff0000'; else if(p.streak >= 3) barColor = '#8a0b0b';
+            html += `
+                <div class="squad-member">
+                    <div class="squad-name" title="${p.name}">${p.name}</div>
+                    <div class="squad-bar-bg">
+                        <div class="squad-bar-fill" style="width:${pPct}%; background:${barColor}"></div>
+                    </div>
+                    <div style="color:#aaa; width:25px; text-align:right;">${pPct}%</div>
+                </div>
+            `;
+        });
+        if(html === '') html = '<div style="font-size:0.6rem; color:#555; text-align:center;">WAITING FOR SQUAD...</div>';
+        els.squadList.innerHTML = html;
+    }
+
+    function calcLayout() {
+        const w = els.mainArea.clientWidth; const h = els.mainArea.clientHeight;
+        const totalArea = w * h; const areaPerBox = totalArea / (data.total || 30);
+        let side = Math.floor(Math.sqrt(areaPerBox)) - 6;
+        if(side < 15) side = 15; if(side > 100) side = 100;
+        let fSize = side / 2.5; if(side < 25) fSize = 0;
+        document.documentElement.style.setProperty('--box-size', `${side}px`);
+        document.documentElement.style.setProperty('--font-size', `${fSize}px`);
+    }
+
+    function resetAll() {
+        if(confirm("Abort Mission?")) { 
+            if(db && roomId && myId) { db.ref('rooms/' + roomId + '/' + myId).remove(); }
+            data.active = false; 
+            localStorage.removeItem(ROOM_KEY); localStorage.removeItem(ROOM_KEY + '_name');
+            save(); location.reload(); 
+        }
+    }
+    function save() { localStorage.setItem(KEY, JSON.stringify(data)); }
+
+</script>
+</body>
+</html>

@@ -71,7 +71,7 @@
             background: rgba(20, 25, 20, 0.95); width: 96vw; height: 96vh;
             border: 1px solid rgba(255,255,255,0.1); border-top: 4px solid var(--corps-accent); border-bottom: 4px solid var(--corps-accent);
             border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.9);
-            position: relative; display: flex; flex-direction: column; backdrop-filter: blur(2px); z-index: 10;
+            position: relative; display: flex; flex-direction: column; backdrop-filter: blur(10px); z-index: 10;
             transition: border-color 0.5s, box-shadow 0.5s;
         }
 
@@ -262,15 +262,9 @@
     // PASTE FIREBASE CONFIG HERE
     // ------------------------------------------------------------------
     const firebaseConfig = {
-  apiKey: "AIzaSyBhgKU1kSCJhzsFABa-IXRe19BaxTSQACI",
-  authDomain: "tracker-9f72a.firebaseapp.com",
-  databaseURL: "https://tracker-9f72a-default-rtdb.firebaseio.com",
-  projectId: "tracker-9f72a",
-  storageBucket: "tracker-9f72a.firebasestorage.app",
-  messagingSenderId: "1037638988632",
-  appId: "1:1037638988632:web:dd2356fa86c33a494beb2d",
-  measurementId: "G-VLLG075RMR"
-};
+        // apiKey: "AIzaSy...",
+        // ...
+    };
     // ------------------------------------------------------------------
 
     let db = null;
@@ -684,5 +678,4 @@
 
 </script>
 </body>
-
 </html>

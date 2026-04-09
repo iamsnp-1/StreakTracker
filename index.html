@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Levi's Log: Precision Mode</title>
+    <title>Levi's Log: Firebase Ultimate</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;900&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -13,7 +13,11 @@
         :root {
             --corps-green: #0a1f12; --corps-accent: #1e5a32; --steel: #b8c2cc; --gold: #c5a059;
             --gas-blue: #00d2ff; --bg-dark: #050505;
-            --rage-1: #8a0b0b; --rage-2: #ff0000; --rage-3: #ff4500;
+            /* Rage Tiers */
+            --rage-1: #8a0b0b; /* Anger */
+            --rage-2: #ff0000; /* Fury */
+            --rage-3: #ff4500; /* Berserk */
+            
             --box-size: 50px; --font-size: 1rem; --grid-gap: 4px;
         }
 
@@ -25,7 +29,7 @@
             overflow: hidden; background-image: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
             background-size: cover; background-position: center;
             color: var(--steel); position: relative; transition: all 0.5s ease-out;
-            overscroll-behavior: none;
+            overscroll-behavior: none; /* Prevent Mobile Bounce */
         }
 
         /* --- FX LAYERS --- */
@@ -44,6 +48,7 @@
             background: rgba(255, 255, 255, 0.2); z-index: 100; pointer-events: none; opacity: 0; mix-blend-mode: overlay;
         }
         .lightning-flash { animation: flash 0.1s linear; }
+        
         .flare-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0;
             transition: opacity 0.5s ease-out; mix-blend-mode: screen;
@@ -51,7 +56,7 @@
         .flare-active { opacity: 0.8; }
         @keyframes flash { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
 
-        /* --- RAGE TIERS --- */
+        /* --- RAGE TIERS CSS --- */
         body.rage-anger .rage-overlay { background: radial-gradient(circle at center, rgba(138, 11, 11, 0.2) 0%, rgba(0,0,0,0.9) 100%); opacity: 1; }
         body.rage-anger .container { border-color: var(--rage-1); box-shadow: 0 0 60px rgba(138, 11, 11, 0.4); }
         
@@ -66,7 +71,7 @@
         @keyframes glitchShake { 0% { transform: translate(1px, 1px); } 25% { transform: translate(-1px, -1px); } 50% { transform: translate(-1px, 1px); } 75% { transform: translate(1px, -1px); } 100% { transform: translate(0, 0); } }
         @keyframes glitchText { 0% { opacity: 1; } 50% { opacity: 0.8; transform: skewX(10deg); } 100% { opacity: 1; transform: skewX(0deg); } }
 
-        /* --- UI COMPONENTS --- */
+        /* --- CONTAINER --- */
         .container {
             background: rgba(20, 25, 20, 0.95); width: 96vw; height: 96vh;
             border: 1px solid rgba(255,255,255,0.1); border-top: 4px solid var(--corps-accent); border-bottom: 4px solid var(--corps-accent);
@@ -75,6 +80,7 @@
             transition: border-color 0.5s, box-shadow 0.5s;
         }
 
+        /* --- HEADER --- */
         header {
             display: flex; justify-content: space-between; align-items: center;
             padding: 10px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -98,7 +104,7 @@
         .header-btn.flare-btn { color: #0f0; border-color: #0f0; text-shadow: 0 0 5px #0f0; }
         .header-btn.flare-btn:hover { background: #0f0; color: #000; }
 
-        /* --- SQUAD LIST --- */
+        /* --- SQUAD PANEL --- */
         .info-panel { padding: 5px 20px 10px; position: relative; flex-shrink: 0; display:flex; gap: 15px; align-items: flex-start; }
         .main-gauge-wrapper { flex: 2; }
         .gas-bar-container { width: 100%; height: 20px; background: #0a0a0a; border: 1px solid #333; border-radius: 4px; position: relative; overflow: hidden; margin-top: 2px; }
@@ -125,15 +131,13 @@
         .titan-box:hover { background: rgba(255,255,255,0.1); border-color: var(--steel); color: #fff; transform: scale(1.1); z-index: 5; }
         .titan-box.killed { background: transparent; border: 1px dashed rgba(255,255,255,0.1); color: transparent; pointer-events: auto; }
         .titan-box.killed::before { content: ''; position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%); animation: steam 1s forwards; pointer-events: none; }
+        
         .has-note::after { content: '✎'; position: absolute; top:2px; right:2px; font-size: 0.6rem; color: var(--gold); opacity: 0.8; }
         @keyframes steam { to { opacity: 0; transform: scale(1.5) translateY(-20px); } }
 
-        /* --- DIAL --- */
+        /* --- DIAL (MOBILE FIXED) --- */
         #setupView { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .dial-container { 
-            width: 260px; height: 260px; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 30px; user-select: none;
-            touch-action: none;
-        }
+        .dial-container { width: 260px; height: 260px; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 30px; user-select: none; touch-action: none; }
         .dial-ring-outer { position: absolute; width: 100%; height: 100%; border: 2px dashed rgba(197, 160, 89, 0.3); border-radius: 50%; animation: spin 20s linear infinite; }
         .dial-ring-inner { position: absolute; width: 85%; height: 85%; border: 1px solid rgba(184, 194, 204, 0.2); border-top: 1px solid var(--gas-blue); border-radius: 50%; animation: spinRev 10s linear infinite; }
         .dial-svg { width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; position: relative; z-index: 5; }
@@ -149,11 +153,11 @@
         .btn-initiate { background: transparent; color: var(--gold); border: 2px solid var(--gold); padding: 12px 50px; font-family: 'Cinzel', serif; font-size: 1.1rem; cursor: pointer; transition: 0.3s; letter-spacing: 2px; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%); margin-top: 20px; }
         .btn-initiate:hover { background: var(--gold); color: #000; box-shadow: 0 0 30px var(--gold); }
 
-        /* --- MODALS --- */
+        /* --- POPUPS & MODALS --- */
         .status-msg {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
             font-family: 'Cinzel', serif; font-weight: 900; font-size: 3rem; color: #fff;
-            text-shadow: 0 0 20px var(--rage-2), 0 0 50px var(--rage-2); opacity: 0; pointer-events: none; z-index: 100; white-space: nowrap;
+            text-shadow: 0 0 20px var(--blood), 0 0 50px var(--blood); opacity: 0; pointer-events: none; z-index: 100; white-space: nowrap;
         }
         .status-msg.pop { animation: msgPop 1.5s forwards; }
         @keyframes msgPop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 10% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(2); filter: blur(10px); } }
@@ -163,7 +167,7 @@
 
         .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #050505; z-index: 200; display:flex; justify-content:center; align-items:center; }
         .modal-box { text-align: center; border: 1px solid #444; padding: 20px; width: 90%; max-width: 400px; background: #111; }
-        .modal-input { padding: 15px; font-size: 1.2rem; background: #111; border: 2px solid #333; color: white; text-align: center; width: 90%; margin-top: 10px; display: block; margin-left: auto; margin-right: auto; }
+        .modal-input { padding: 15px; font-size: 1.2rem; background: #111; border: 2px solid #333; color: white; text-align: center; width: 90%; margin-top: 10px; display: block; margin-left: auto; margin-right: auto; outline: none; }
         .modal-btn { padding: 15px 30px; font-size: 1rem; background: var(--gold); border: none; font-weight: bold; cursor: pointer; margin-top: 20px; font-family: 'Cinzel'; margin-left: 5px; }
         textarea.modal-input { min-height: 100px; text-align: left; resize: none; font-family: monospace; font-size: 1rem; }
 
@@ -181,9 +185,9 @@
 <div class="modal-overlay" id="lobbyModal">
     <div class="modal-box">
         <h1 style="font-family:'Cinzel'; color:var(--steel); font-size: 2.5rem;">SQUAD JOIN</h1>
-        <p style="color:#888; margin-top: 20px;">CALL SIGN</p>
+        <p style="color:#888; margin-top: 20px; font-size: 0.8rem;">CALL SIGN</p>
         <input type="text" id="nameInput" class="modal-input" placeholder="e.g. Captain Levi">
-        <p style="color:#888; margin-top: 15px;">ROOM NAME</p>
+        <p style="color:#888; margin-top: 15px; font-size: 0.8rem;">ROOM NAME</p>
         <input type="text" id="roomInput" class="modal-input" placeholder="e.g. wall-maria">
         <button class="modal-btn" onclick="joinRoom()">DEPLOY</button>
     </div>
@@ -259,17 +263,17 @@
 
 <script>
     // ------------------------------------------------------------------
-    // PASTE FIREBASE CONFIG HERE
+    // PASTE YOUR FIREBASE CONFIG HERE
     // ------------------------------------------------------------------
     const firebaseConfig = {
-        apiKey: "AIzaSyBhgKU1kSCJhzsFABa-IXRe19BaxTSQACI",
-      authDomain: "tracker-9f72a.firebaseapp.com",
-      databaseURL: "https://tracker-9f72a-default-rtdb.firebaseio.com/",
-      projectId: "tracker-9f72a",
-      storageBucket: "tracker-9f72a.firebasestorage.app",
-      messagingSenderId: "1037638988632",
-      appId: "1:1037638988632:web:dd2356fa86c33a494beb2d",
-      measurementId: "G-VLLG075RMR"
+          apiKey: "AIzaSyBhgKU1kSCJhzsFABa-IXRe19BaxTSQACI",
+          authDomain: "tracker-9f72a.firebaseapp.com",
+          databaseURL: "https://tracker-9f72a-default-rtdb.firebaseio.com",
+          projectId: "tracker-9f72a",
+          storageBucket: "tracker-9f72a.firebasestorage.app",
+          messagingSenderId: "1037638988632",
+          appId: "1:1037638988632:web:dd2356fa86c33a494beb2d",
+          measurementId: "G-VLLG075RMR"
     };
     // ------------------------------------------------------------------
 
@@ -279,14 +283,14 @@
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
         }
-    } catch(e) { console.warn("Firebase Error"); }
+    } catch(e) { console.warn("Firebase Not Configured"); }
 
-    const KEY = 'levi_precision_log';
-    const BG_KEY = 'levi_precision_bg';
+    const KEY = 'levi_final_v2_log';
+    const BG_KEY = 'levi_final_v2_bg';
     const ROOM_KEY = 'levi_room_id';
     const ID_KEY = 'levi_player_id';
     
-    // Persistent ID Logic
+    // Persistent ID
     let myId = localStorage.getItem(ID_KEY);
     if (!myId) {
         myId = 'scout_' + Math.random().toString(36).substr(2, 6);
@@ -299,14 +303,17 @@
     let squadData = {}; 
     let selectedTitanIndex = null;
 
-    // --- SOUND ---
+    // --- AUDIO SYSTEM ---
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
+
     function playSound(type) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
         if (type === 'slash') {
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(800, audioCtx.currentTime);
@@ -329,7 +336,7 @@
         }
     }
 
-    // --- DOM ---
+    // --- DOM ELEMENTS ---
     const els = {
         lobby: document.getElementById('lobbyModal'),
         game: document.getElementById('gameContainer'),
@@ -352,16 +359,7 @@
         noteInput: document.getElementById('noteInput')
     };
 
-    // --- TIME UTILS (LOCAL) ---
-    function getTodayString() {
-        const d = new Date();
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    // --- DIAL ---
+    // --- DIAL LOGIC ---
     const dialInteraction = document.getElementById('dialInteraction');
     const dialProgress = document.getElementById('dialProgress');
     const knobDot = document.getElementById('knobDot');
@@ -398,17 +396,14 @@
     dialInput.addEventListener('change', (e) => setDialValue(parseInt(e.target.value)||30));
     setDialValue(30);
 
-    // --- SETUP ---
+    // --- SETUP & LOAD ---
     window.onload = () => {
-        // Init Check
-        checkRealTimeDecay();
-        document.addEventListener("visibilitychange", () => {
-            if (!document.hidden) checkRealTimeDecay();
-        });
-
         const saved = localStorage.getItem(KEY);
         if(saved) {
             data = JSON.parse(saved);
+            if(data.lastLogDate !== getTodayString()) {
+                data.dailyKills = 0; checkStreakDecay(); save();
+            }
         }
         
         const savedBg = localStorage.getItem(BG_KEY);
@@ -434,7 +429,7 @@
         reader.readAsDataURL(file);
     }
 
-    // --- JOIN ---
+    // --- MULTIPLAYER ROOM ---
     function joinRoom() {
         if(!db) { alert("Paste Firebase Config in the code to enable multiplayer!"); return; }
         const rName = els.roomInput.value.trim();
@@ -455,7 +450,7 @@
         if(data.active) { renderGame(); updateServer(); }
     }
 
-    // --- GAME ---
+    // --- MISSION LOGIC ---
     function startMission() {
         const val = parseInt(dialInput.value); if(!val) return;
         const newTitans = []; for(let i=0; i<val; i++) newTitans.push({ id: i+1, dead: false, note: "" });
@@ -475,6 +470,7 @@
         calcLayout(); updateUI(); checkRageMode();
     }
 
+    // --- NOTES SYSTEM ---
     function handleBoxClick(index, box) {
         if(data.titans[index].dead) openNote(index);
         else killTitan(index, box);
@@ -502,55 +498,29 @@
 
     function closeNote() { els.noteModal.classList.add('hidden'); selectedTitanIndex = null; }
 
-    // --- STREAK LOGIC ---
-    function checkRealTimeDecay() {
-        // Runs on load and on visibility change
-        const saved = localStorage.getItem(KEY);
-        if(!saved) return;
-        
-        let tempData = JSON.parse(saved);
-        if(!tempData.lastLogDate) return;
+    // --- TIME & STREAKS ---
+    function getTodayString() {
+        const d = new Date();
+        // Force local YYYY-MM-DD
+        return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0');
+    }
 
-        const todayStr = getTodayString();
-        if(tempData.lastLogDate !== todayStr) {
-            // New day detected. Reset daily kills immediately.
-            tempData.dailyKills = 0;
-            
-            // Check if streak broke
-            const last = new Date(tempData.lastLogDate);
-            const today = new Date(todayStr);
-            const diffDays = Math.floor((today - last) / (1000 * 60 * 60 * 24));
-            
-            if (diffDays > 1) {
-                tempData.streak = 0; // Reset streak if gap > 1 day
-            }
-            
-            data = tempData;
-            save();
-            if(data.active) { updateUI(); checkRageMode(); }
-        }
+    function checkStreakDecay() {
+        if(!data.lastLogDate) return;
+        const today = new Date(getTodayString()); const last = new Date(data.lastLogDate);
+        if(Math.round((today - last) / (1000*60*60*24)) > 1) data.streak = 0;
     }
 
     function killTitan(index, box) {
         data.titans[index].dead = true;
         const todayStr = getTodayString();
         
-        // Accurate Streak Calculation
         if(data.lastLogDate === todayStr) { 
             data.dailyKills = (data.dailyKills||0) + 1; 
         } else {
-            // It's a new day (that wasn't caught by checkRealTimeDecay yet)
             data.dailyKills = 1;
-            const last = data.lastLogDate ? new Date(data.lastLogDate) : null;
-            const today = new Date(todayStr);
-            
-            if (last) {
-                const diffDays = Math.floor((today - last) / (1000 * 60 * 60 * 24));
-                if (diffDays === 1) data.streak++; // Consecutive
-                else data.streak = 1; // Gap or new
-            } else {
-                data.streak = 1;
-            }
+            const today = new Date(todayStr); const last = data.lastLogDate ? new Date(data.lastLogDate) : null;
+            if(last && Math.round((today - last)/(1000*60*60*24)) === 1) data.streak++; else data.streak = 1;
             data.lastLogDate = todayStr;
         }
         
@@ -566,13 +536,15 @@
         checkRageMode(); renderGame(); updateServer();
     }
 
+    // --- GOD MODE EFFECTS ---
     function checkRageMode() {
         els.body.classList.remove('rage-anger', 'rage-fury', 'rage-berserk');
         let effectiveStreak = data.streak;
+        
         if(data.dailyKills >= 2 && effectiveStreak < 3) effectiveStreak = 3;
         if(data.dailyKills >= 5 && effectiveStreak < 5) effectiveStreak = 5;
 
-        if(effectiveStreak >= 10) { els.body.classList.add('rage-berserk'); triggerLightning(); if(data.dailyKills>=2) showStatus("GOD MODE"); }
+        if(effectiveStreak >= 10) { els.body.classList.add('rage-berserk'); triggerLightning(); }
         else if (effectiveStreak >= 5) els.body.classList.add('rage-fury');
         else if (effectiveStreak >= 3) els.body.classList.add('rage-anger');
     }
@@ -582,6 +554,7 @@
         void els.lightning.offsetWidth; els.lightning.classList.add('lightning-flash');
     }
 
+    // --- FLARE SYSTEM ---
     function fireFlare(type) {
         if(!db || !roomId) return;
         showFlare(type === 'green' ? '#0f0' : '#f00');
@@ -592,7 +565,7 @@
         els.flareOverlay.style.backgroundColor = color;
         els.flareOverlay.classList.add('flare-active');
         playSound('flare');
-        showStatus("SIGNAL FLARE RECEIVED");
+        showStatus("SIGNAL FLARE");
         setTimeout(() => els.flareOverlay.classList.remove('flare-active'), 1000);
     }
 
@@ -616,6 +589,7 @@
         renderSquadList();
     }
 
+    // --- FIREBASE SYNC ---
     function updateServer() {
         if(!db || !roomId) return;
         const kills = data.titans.filter(t => t.dead).length;
@@ -629,6 +603,7 @@
         db.ref('rooms/' + roomId).on('value', (snapshot) => {
             const val = snapshot.val();
             if(!val) return;
+            
             if(val.flare && val.flare.timestamp > Date.now() - 2000 && val.flare.sender !== myName) {
                 showFlare(val.flare.color === 'green' ? '#0f0' : '#f00');
             }
@@ -675,8 +650,7 @@
         if(confirm("Abort Mission? This removes you from the squad.")) { 
             if(db && roomId && myId) { db.ref('rooms/' + roomId + '/' + myId).remove(); }
             data.active = false; 
-            localStorage.removeItem(ROOM_KEY); 
-            localStorage.removeItem(ROOM_KEY + '_name');
+            localStorage.removeItem(ROOM_KEY); localStorage.removeItem(ROOM_KEY + '_name');
             save(); location.reload(); 
         }
     }
